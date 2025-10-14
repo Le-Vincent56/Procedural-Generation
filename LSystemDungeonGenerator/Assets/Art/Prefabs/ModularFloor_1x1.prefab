@@ -9,7 +9,6 @@ GameObject:
   serializedVersion: 6
   m_Component:
   - component: {fileID: 5588429862314404661}
-  - component: {fileID: 1100209831109198451}
   m_Layer: 0
   m_Name: ModularFloor_1x1
   m_TagString: Untagged
@@ -33,26 +32,6 @@ Transform:
   - {fileID: 3107042402575553659}
   m_Father: {fileID: 0}
   m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
---- !u!114 &1100209831109198451
-MonoBehaviour:
-  m_ObjectHideFlags: 0
-  m_CorrespondingSourceObject: {fileID: 0}
-  m_PrefabInstance: {fileID: 0}
-  m_PrefabAsset: {fileID: 0}
-  m_GameObject: {fileID: 1800569347722659760}
-  m_Enabled: 1
-  m_EditorHideFlags: 0
-  m_Script: {fileID: 11500000, guid: d8c530dd73b45b14498201bccffe74f9, type: 3}
-  m_Name: 
-  m_EditorClassIdentifier: 
-  Type: 0
-  AnchorsOn: 0
-  CellSize: {x: 1, y: 1, z: 1}
-  HasN: 1
-  HasE: 1
-  HasS: 1
-  HasW: 1
-  FloorDelta: 0
 --- !u!1001 &3212429821580342160
 PrefabInstance:
   m_ObjectHideFlags: 0
@@ -75,7 +54,7 @@ PrefabInstance:
       objectReference: {fileID: 0}
     - target: {fileID: -8679921383154817045, guid: 73dea956b59f96b44aa3678e18034efb, type: 3}
       propertyPath: m_LocalPosition.x
-      value: 1
+      value: 0
       objectReference: {fileID: 0}
     - target: {fileID: -8679921383154817045, guid: 73dea956b59f96b44aa3678e18034efb, type: 3}
       propertyPath: m_LocalPosition.y
@@ -83,7 +62,7 @@ PrefabInstance:
       objectReference: {fileID: 0}
     - target: {fileID: -8679921383154817045, guid: 73dea956b59f96b44aa3678e18034efb, type: 3}
       propertyPath: m_LocalPosition.z
-      value: 1
+      value: 0
       objectReference: {fileID: 0}
     - target: {fileID: -8679921383154817045, guid: 73dea956b59f96b44aa3678e18034efb, type: 3}
       propertyPath: m_LocalRotation.w
