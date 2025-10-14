@@ -13,8 +13,7 @@ namespace Didionysymus.DungeonGeneration.LSystem
         [SerializeField] private GameObject WallPrefab;
         [SerializeField] private GameObject DoorPrefab;
         [SerializeField] private GameObject ArchPrefab;
-        [SerializeField] private GameObject StairsPrefab;
-        [SerializeField] private GameObject StairsSideCoverPrefab;
+        [SerializeField] private GameObject CeilingPrefab;
         
         [Header("Organization")]
         [SerializeField] private Transform Parent;
@@ -48,7 +47,7 @@ namespace Didionysymus.DungeonGeneration.LSystem
         private void SetupHierarchy()
         {
             // Create the parent object if it doesn't exist
-            if (Parent == null)
+            if (!Parent)
             {
                 Parent = new GameObject("Dungeon").transform;
             }
@@ -110,7 +109,8 @@ namespace Didionysymus.DungeonGeneration.LSystem
                 PlaceWalls(cell);
             }
             
-            // Third pass: Place stairs
+            // Fourth pass: Place ceilings
+            PlaceCeilings(grid, rooms);
             
         }
 
@@ -121,7 +121,7 @@ namespace Didionysymus.DungeonGeneration.LSystem
         private void PlaceFloor(DungeonCell cell)
         {
             // Exit case - a floor prefab does not exist
-            if (FloorPrefab == null) return;
+            if (!FloorPrefab) return;
             
             // Get the world position of the cell
             Vector3 worldPosition = cell.GetWorldPosition(_config.CellSize, _config.FloorHeightUnits);
@@ -144,7 +144,7 @@ namespace Didionysymus.DungeonGeneration.LSystem
         private void PlaceWalls(DungeonCell cell)
         {
             // Exit case - a wall prefab does not exist
-            if (WallPrefab == null) return;
+            if (!WallPrefab) return;
             
             Vector3 worldPosition = cell.GetWorldPosition(_config.CellSize, _config.FloorHeightUnits);
             
@@ -163,43 +163,49 @@ namespace Didionysymus.DungeonGeneration.LSystem
         /// <param name="cell">The DungeonCell containing grid position and other relevant wall information</param>
         private void PlaceWall(Vector3 cellWorldPosition, Direction direction, DungeonCell cell)
         {
-            Vector3 wallPosition = cellWorldPosition;
+            Vector3 baseWallPosition = cellWorldPosition;
             Quaternion wallRotation = Quaternion.identity;
             float halfCell = _config.CellSize * 0.5f;
 
-            // Rotate the wall based on the direction
+            // Calculate base position and rotation
             switch (direction)
             {
                 case Direction.North:
-                    wallPosition += new Vector3(0, 0, halfCell);
+                    baseWallPosition += new Vector3(0, 0, halfCell);
                     wallRotation = Quaternion.Euler(0, 0, 0);
                     break;
-                
+        
                 case Direction.South:
-                    wallPosition += new Vector3(0, 0, -halfCell);
+                    baseWallPosition += new Vector3(0, 0, -halfCell);
                     wallRotation = Quaternion.Euler(0, 180, 0);
                     break;
-                    
+            
                 case Direction.East:
-                    wallPosition += new Vector3(halfCell, 0, 0);
+                    baseWallPosition += new Vector3(halfCell, 0, 0);
                     wallRotation = Quaternion.Euler(0, 90, 0);
                     break;
-                    
+            
                 case Direction.West:
-                    wallPosition += new Vector3(-halfCell, 0, 0);
+                    baseWallPosition += new Vector3(-halfCell, 0, 0);
                     wallRotation = Quaternion.Euler(0, -90, 0);
                     break;
             }
-            
-            // Instantiate the wall object
-            GameObject wall = Instantiate(WallPrefab, wallPosition, wallRotation, _wallsParent);
-            wall.name = $"Wall_{cell.GridPosition.x}_{cell.GridPosition.y}_{direction}";
-            
-            // Scale to match cell size
-            // Prefabs at scale (1,1,1) = 2 world units, so scale factor = CellSize / 2
-            // Keep walls thin by using reduced Z scale
-            float scaleFactor = _config.CellSize / 2f;
-            wall.transform.localScale = new Vector3(scaleFactor, scaleFactor, scaleFactor * 0.5f);
+    
+            // Stack wall segments vertically based on room height
+            int wallSegments = Mathf.CeilToInt(_config.FloorHeightCells);
+    
+            for (int height = 0; height < wallSegments; height++)
+            {
+                Vector3 wallPosition = baseWallPosition + new Vector3(0, height * _config.CellSize, 0);
+        
+                // Instantiate the wall object
+                GameObject wall = Instantiate(WallPrefab, wallPosition, wallRotation, _wallsParent);
+                wall.name = $"Wall_{cell.GridPosition.x}_{cell.GridPosition.y}_{direction}_H{height}";
+        
+                // Scale to match cell size
+                float scaleFactor = _config.CellSize / 2f;
+                wall.transform.localScale = new Vector3(scaleFactor, scaleFactor, scaleFactor * 0.5f);
+            }
         }
 
         /// <summary>
@@ -213,7 +219,7 @@ namespace Didionysymus.DungeonGeneration.LSystem
         private void PlaceDoors(RoomData room, Dictionary<Vector2Int, DungeonCell> grid)
         {
             // Exit case - the arch or door prefab does not exist
-            if (ArchPrefab == null || DoorPrefab == null) return;
+            if (!ArchPrefab || !DoorPrefab) return;
 
             for (int i = 0; i < room.DoorPositions.Count; i++)
             {
@@ -263,15 +269,22 @@ namespace Didionysymus.DungeonGeneration.LSystem
                 // Scale factor for prefabs (at (1,1,1) = 2 world units)
                 float scaleFactor = _config.CellSize / 2f;
                 
+                // Roll to see if a door will appear
+                bool hasDoor = Random.value < _config.DoorChance;
+                
                 // Place the arch
                 GameObject arch = Instantiate(ArchPrefab, midpoint, rotation, _doorsParent);
                 arch.name = $"Arch_{outsidePosition.x}_{outsidePosition.y}";
                 arch.transform.localScale = Vector3.one * scaleFactor;
                 
-                // Place door inside arch
-                GameObject door = Instantiate(DoorPrefab, midpoint, rotation, _doorsParent);
-                door.name = $"Door_{outsidePosition.x}_{outsidePosition.y}";
-                door.transform.localScale = Vector3.one * scaleFactor;
+                // Check if placing a door
+                if (hasDoor)
+                {
+                    // Place door inside arch
+                    GameObject door = Instantiate(DoorPrefab, midpoint, rotation, _doorsParent);
+                    door.name = $"Door_{outsidePosition.x}_{outsidePosition.y}";
+                    door.transform.localScale = Vector3.one * scaleFactor;
+                }
                 
                 // Remove walls where the door is placed
                 RemoveWallsForDoor(outsideCell, doorDirection, grid);
@@ -327,27 +340,58 @@ namespace Didionysymus.DungeonGeneration.LSystem
                     break;
             }
         }
-
-        /// <summary>
-        /// Places a stair structure at the specified dungeon cell position based on the provided dungeon configuration
-        /// </summary>
-        /// <param name="cell">The dungeon cell where the stairs should be instantiated; includes information about grid position and floor level</param>
-        private void PlaceStairs(DungeonCell cell)
+        
+        private void PlaceCeilings(Dictionary<Vector2Int, DungeonCell> grid, List<RoomData> rooms)
         {
-            // Exit case - the stair prefab does not exist
-            if (StairsPrefab == null) return;
-
-            // Get the world position of the cell
-            Vector3 worldPosition = cell.GetWorldPosition(_config.CellSize, _config.FloorHeightUnits);
+            // Exit case - no ceiling prefab
+            if (CeilingPrefab == null) return;
             
-            // Stack segments vertically
-            int segments = Mathf.RoundToInt(_config.FloorHeightCells);
-            for (int i = 0; i < segments; i++)
+            // Create a parent for ceilings if it doesn't exist
+            Transform ceilingsParent = new GameObject("Ceilings").transform;
+            ceilingsParent.SetParent(Parent);
+            
+            // Place ceiling for each room
+            foreach (RoomData room in rooms)
             {
-                Vector3 segmentPosition = worldPosition + new Vector3(0, i * _config.CellSize, 0);
-                GameObject segment = Instantiate(StairsPrefab, segmentPosition, Quaternion.identity, Parent);
-                segment.name = $"Stairs_{cell.GridPosition.x}_{cell.GridPosition.y}_seg{i}";
-                segment.transform.localScale = Vector3.one * (_config.CellSize / 2f);
+                // Skip corridors if you don't want them to have ceilings
+                if (room.Type == RoomType.Corridor) continue;
+                
+                // Place ceiling tiles for the entire room
+                foreach (Vector2Int cellPos in room.OccupiedCells)
+                {
+                    if (!grid.TryGetValue(cellPos, out DungeonCell cell)) continue;
+                    
+                    // Calculate ceiling position (at the top of the room)
+                    Vector3 ceilingPosition = cell.GetWorldPosition(_config.CellSize, _config.FloorHeightUnits);
+                    ceilingPosition.y += _config.FloorHeightUnits; // Move to top of room
+                    
+                    // Instantiate ceiling
+                    GameObject ceiling = Instantiate(CeilingPrefab, ceilingPosition, Quaternion.identity, ceilingsParent);
+                    ceiling.name = $"Ceiling_{cellPos.x}_{cellPos.y}";
+                    
+                    // Scale to match cell size
+                    float scaleFactor = _config.CellSize / 2f;
+                    ceiling.transform.localScale = Vector3.one * scaleFactor;
+                }
+            }
+            
+            // Also place ceilings over corridors
+            foreach (KeyValuePair<Vector2Int, DungeonCell> kvp in grid)
+            {
+                DungeonCell cell = kvp.Value;
+                
+                // Place ceiling over corridors
+                if (cell.Type == CellType.Corridor && cell.IsOccupied)
+                {
+                    Vector3 ceilingPosition = cell.GetWorldPosition(_config.CellSize, _config.FloorHeightUnits);
+                    ceilingPosition.y += _config.FloorHeightUnits;
+                    
+                    GameObject ceiling = Instantiate(CeilingPrefab, ceilingPosition, Quaternion.identity, ceilingsParent);
+                    ceiling.name = $"Ceiling_Corridor_{cell.GridPosition.x}_{cell.GridPosition.y}";
+                    
+                    float scaleFactor = _config.CellSize / 2f;
+                    ceiling.transform.localScale = Vector3.one * scaleFactor;
+                }
             }
         }
 

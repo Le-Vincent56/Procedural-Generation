@@ -48,7 +48,7 @@ namespace Didionysymus.DungeonGeneration.LSystem
         public void PlaceProps()
         {
             // Exit case - no DungeonGenerator component
-            if (Generator == null)
+            if (!Generator)
             {
                 Debug.LogError("DungeonGenerator component not found");
                 return;
@@ -65,7 +65,7 @@ namespace Didionysymus.DungeonGeneration.LSystem
             }
             
             // Setup parent if it does not exist
-            if(Parent == null) 
+            if(!Parent) 
             {
                 Parent = new GameObject("Props").transform;
             }

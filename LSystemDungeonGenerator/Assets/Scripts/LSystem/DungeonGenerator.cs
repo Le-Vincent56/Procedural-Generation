@@ -1,5 +1,7 @@
+using System;
 using System.Collections.Generic;
 using UnityEngine;
+using Random = UnityEngine.Random;
 
 namespace Didionysymus.DungeonGeneration.LSystem
 {
@@ -20,12 +22,14 @@ namespace Didionysymus.DungeonGeneration.LSystem
 
         private LSystemGrammar _grammar;
         private DungeonTurtle _turtle;
-        private string generatedString;
+        private string _generatedString;
 
         public DungeonConfig Configuration => Config;
         public Dictionary<Vector2Int, DungeonCell> Grid { get; private set; }
         public List<RoomData> Rooms { get; private set; }
-        
+        public RoomData GetStartRoom() => Rooms?.Find(r => r.Type == RoomType.Start);
+
+        public event Action OnDungeonGenerated = delegate { };
 
         private void Start()
         {
@@ -44,20 +48,20 @@ namespace Didionysymus.DungeonGeneration.LSystem
         public void GenerateDungeon()
         {
             // Exit case - no DungeonConfig is assigned
-            if (Config == null)
+            if (!Config)
             {
                 Debug.LogError("DungeonConfig is not assigned");
                 return;
             }
 
             // Check if a DungeonInstantiator is serialized
-            if (Instantiator == null)
+            if (!Instantiator)
             {
                 // Attempt to find the DungeonInstantiator component
                 Instantiator = GetComponent<DungeonInstantiator>();
                 
                 // Exit case - no DungeonInstantiator component found
-                if (Instantiator == null)
+                if (!Instantiator)
                 {
                     Debug.LogError("DungeonInstantiator component not found");
                     return;
@@ -79,18 +83,18 @@ namespace Didionysymus.DungeonGeneration.LSystem
             Instantiator.Initialize(Config, _turtle);
             
             // Generate the L-system string
-            generatedString = _grammar.Generate();
+            _generatedString = _grammar.Generate();
 
             // If debugging, log the generated string
             if (Config.Debug)
             {
                 Debug.Log($"Generated L-System String:" +
                           $"\n\tSeed: {seed}" +
-                          $"\n\t{generatedString}");
+                          $"\n\t{_generatedString}");
             }
             
             // Interpret the string into spatial data
-            _turtle.Walkthrough(generatedString);
+            _turtle.Walkthrough(_generatedString);
             
             // Set the grid and room data
             Grid = _turtle.Grid;
@@ -114,6 +118,9 @@ namespace Didionysymus.DungeonGeneration.LSystem
             
             float endTime = Time.realtimeSinceStartup;
             Debug.Log($"Dungeon generation took {endTime - startTime} seconds");
+
+            // Invoke the event
+            OnDungeonGenerated?.Invoke();
         }
 
         /// <summary>

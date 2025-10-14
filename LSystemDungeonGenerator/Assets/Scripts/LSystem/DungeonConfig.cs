@@ -23,6 +23,7 @@ namespace Didionysymus.DungeonGeneration.LSystem
         public float SmallRoomChance = 0.5f;
         public float MediumRoomChance = 0.35f;
         public float LargeRoomChance = 0.15f;
+        [Range(0f, 1f)] public float DoorChance = 0.5f; 
         
         [Header("Special Rooms")]
         public int BossRoomCount = 1;
@@ -32,20 +33,6 @@ namespace Didionysymus.DungeonGeneration.LSystem
         [Header("Corridor Settings")]
         public int MinCorridorLength = 3;
         public int MaxCorridorLength = 6;
-        public int CorridorWidth = 1;
-
-        [Header("Density")]
-        [Tooltip("Desired fill percentage of the dungeon (higher = more full)")]
-        [Range(0f, 1f)]
-        public float DesiredFill = 0.65f;
-        
-        [Tooltip("How densely packed the dungeon should be (higher = more cramped")]
-        [Range(0f, 1f)]
-        public float DungeonDensity = 0.6f;
-        
-        [Tooltip("Chance of branching during generation")]
-        [Range(0f, 1f)]
-        public float BranchingChance = 0.4f;
         
         [Header("Physical Dimensions")]
         [Tooltip("The size of one grid cell in world units")]
