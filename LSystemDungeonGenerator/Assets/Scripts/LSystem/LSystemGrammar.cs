@@ -27,20 +27,21 @@ namespace Didionysymus.DungeonGeneration.LSystem
             _expansionRules = new Dictionary<char, List<string>>();
             
             // Start room expands into corridors and rooms
-            AddRule('S', "RC[+RC][-RC]");   // Start with a corridor and branch into more rooms and corridors
-            AddRule('S', "R[+C]R[-C]R");    // Start with a room with multiple branches
+            AddRule('S', "RC");         // Start with a room and corridor
+            AddRule('S', "RC[+RC]");    // Start with a branch
+            AddRule('S', "RC[-RC]");    // Start with branch
             
             // Rooms can connect to corridors
-            AddRule('R', "CR");     // Room followed by a corridor and another room
-            AddRule('R', "C[+R]");  // Room with a branching corridor (+)
-            AddRule('R', "C[-R]");  // Room with a branching corridor (-)
             AddRule('R', "R");      // Room stays as a room
+            AddRule('R', "R");      // Add weight
+            AddRule('R', "CR");     // Room to corridor to room
+            AddRule('R', "C[+R]");  // Room with a branch
+            AddRule('R', "C[-R]");
             
             // Corridors can lead to rooms or more corridors
+            AddRule('C', "C");      // Single corridor segment
+            AddRule('C', "C");      // Add weight
             AddRule('C', "CR");     // Corridor to room
-            AddRule('C', "CC");     // Corridor to corridor
-            AddRule('C', "C[+C]C"); // Corridor with a branch
-            AddRule('C', "C");      // Corridor ends (dead-end)
             
             // Special room types
             AddRule('B', "B");  // Boss Room

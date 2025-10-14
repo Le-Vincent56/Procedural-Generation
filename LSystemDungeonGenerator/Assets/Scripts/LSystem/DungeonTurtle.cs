@@ -68,7 +68,11 @@ namespace Didionysymus.DungeonGeneration.LSystem
                 ProcessSymbol(symbol);
             }
 
+            // Ensure all rooms are connected
+            EnsureConnectivity();
+            
             // After interpretation, build walls
+            CreateDoors();
             BuildWalls();
         }
 
@@ -225,89 +229,336 @@ namespace Didionysymus.DungeonGeneration.LSystem
         private void CreateCorridor()
         {
             int length = _grammar.GetRandomCorridorLength();
-
+            bool connectedToSomething = false;
+    
             for (int step = 0; step < length; step++)
             {
-                //  We’re already adjacent to a room from the current cell, enter now
-                if (TryFindAdjacentRoom(_currentState.Position, 
-                        out Vector2Int roomCellNow, 
-                        out Direction faceNow, 
-                        out RoomData roomNow)
-                )
+                Vector2Int nextPos = MoveForward(_currentState.Position, _currentState.Facing);
+        
+                // Check bounds
+                if (!IsInBounds(nextPos)) break;
+        
+                DungeonCell nextCell = GetOrCreateCell(nextPos);
+        
+                // If we hit a room, we've connected - stop
+                if (nextCell.Type == CellType.Room)
                 {
-                    // If that wall has no door yet, place a door here; if it already has one, keep walking
-                    if (!RoomAlreadyHasDoorOnWall(roomNow, faceNow))
+                    connectedToSomething = true;
+                    break;
+                }
+        
+                // If we hit another corridor, we've connected - continue a bit more then stop
+                if (nextCell.Type == CellType.Corridor)
+                {
+                    connectedToSomething = true;
+                    // Continue for 1-2 more steps to ensure good overlap
+                    if (step < length - 2)
                     {
-                        // Current cell must be corridor (outside)
-                        DungeonCell current = GetOrCreateCell(_currentState.Position);
-                        if (current.Type == CellType.Empty)
-                        {
-                            current.Type = CellType.Corridor; 
-                            current.IsOccupied = true; 
-                            current.FloorLevel = _currentFloor;
-                        }
-
-                        // Record the door and stop (corridor ends at the door)
-                        roomNow.DoorPositions.Add(_currentState.Position);
-                        roomNow.DoorDirections.Add(faceNow);
+                        _currentState.Position = nextPos;
+                        continue;
+                    }
+                    else
+                    {
                         break;
                     }
                 }
-
-                // Candidate step forward
-                Vector2Int nextPos = MoveForward(_currentState.Position, _currentState.Facing);
-                
-                // Exit case - the next position is not in bounds
-                if (!IsInBounds(nextPos)) break;
-
-                DungeonCell forward = GetCell(nextPos);
-
-                // If going straight into a room, place a door ahead and stop
-                if (forward is { Type: CellType.Room })
+        
+                // Mark as corridor if empty
+                if (nextCell.Type == CellType.Empty)
                 {
-                    // Ensure current outside is corridor
-                    DungeonCell current = GetOrCreateCell(_currentState.Position);
-                    if (current.Type == CellType.Empty)
-                    {
-                        current.Type = CellType.Corridor; 
-                        current.IsOccupied = true; 
-                        current.FloorLevel = _currentFloor;
-                    }
-
-                    RoomData target = Rooms.Find(r => r.RoomID == forward.RoomID);
-                    if (target != null)
-                    {
-                        target.DoorPositions.Add(_currentState.Position);
-                        target.DoorDirections.Add(_currentState.Facing);
-                    }
-                    break;
+                    nextCell.Type = CellType.Corridor;
+                    nextCell.IsOccupied = true;
+                    nextCell.FloorLevel = _currentFloor;
                 }
-
-                // Step into the next cell of the corridor
-                DungeonCell next = GetOrCreateCell(nextPos);
-                if (next.Type == CellType.Empty)
-                {
-                    next.Type = CellType.Corridor; 
-                    next.IsOccupied = true; 
-                    next.FloorLevel = _currentFloor;
-                }
-                
-                // Update the current state
+        
                 _currentState.Position = nextPos;
+        
+                // Check if we're adjacent to anything
+                if (IsAdjacentToOccupied(nextPos))
+                {
+                    connectedToSomething = true;
+                }
+            }
+    
+            // If we didn't connect to anything, try to extend toward nearest occupied cell
+            if (!connectedToSomething)
+            {
+                ExtendCorridorToConnect();
+            }
+        }
+        
+        private bool IsAdjacentToOccupied(Vector2Int position)
+        {
+            Vector2Int[] neighbors = {
+                position + Vector2Int.up,
+                position + Vector2Int.down,
+                position + Vector2Int.left,
+                position + Vector2Int.right
+            };
+            
+            foreach (var neighbor in neighbors)
+            {
+                if (Grid.TryGetValue(neighbor, out DungeonCell cell) && cell.IsOccupied)
+                {
+                    return true;
+                }
+            }
+            
+            return false;
+        }
 
-                // Skip If the new cell is not hugging a room
-                if (!TryFindAdjacentRoom(nextPos,
-                        out Vector2Int roomCellNext,
-                        out Direction faceNext,
-                        out RoomData roomNext)) continue;
+        // Add method to extend corridor toward nearest occupied area
+        private void ExtendCorridorToConnect()
+        {
+            Vector2Int currentPos = _currentState.Position;
+            Vector2Int? nearestOccupied = FindNearestOccupiedCell(currentPos, 10);
+            
+            if (nearestOccupied.HasValue)
+            {
+                // Create a simple path toward the nearest occupied cell
+                Vector2Int target = nearestOccupied.Value;
                 
-                // Skip if this wall already has a door
-                if (RoomAlreadyHasDoorOnWall(roomNext, faceNext)) continue;
+                // Move horizontally first
+                while (currentPos.x != target.x && IsInBounds(currentPos))
+                {
+                    currentPos.x += (target.x > currentPos.x) ? 1 : -1;
                     
-                // Add a door position by entering the room
-                roomNext.DoorPositions.Add(nextPos);
-                roomNext.DoorDirections.Add(faceNext);
-                break;
+                    DungeonCell cell = GetOrCreateCell(currentPos);
+                    if (cell.Type == CellType.Empty)
+                    {
+                        cell.Type = CellType.Corridor;
+                        cell.IsOccupied = true;
+                        cell.FloorLevel = _currentFloor;
+                    }
+                    else if (cell.IsOccupied)
+                    {
+                        break; // We've connected!
+                    }
+                }
+                
+                // Then move vertically
+                while (currentPos.y != target.y && IsInBounds(currentPos))
+                {
+                    currentPos.y += (target.y > currentPos.y) ? 1 : -1;
+                    
+                    DungeonCell cell = GetOrCreateCell(currentPos);
+                    if (cell.Type == CellType.Empty)
+                    {
+                        cell.Type = CellType.Corridor;
+                        cell.IsOccupied = true;
+                        cell.FloorLevel = _currentFloor;
+                    }
+                    else if (cell.IsOccupied)
+                    {
+                        break; // We've connected!
+                    }
+                }
+                
+                _currentState.Position = currentPos;
+            }
+        }
+
+        // Add helper to find nearest occupied cell
+        private Vector2Int? FindNearestOccupiedCell(Vector2Int from, int maxDistance)
+        {
+            for (int radius = 1; radius <= maxDistance; radius++)
+            {
+                for (int dx = -radius; dx <= radius; dx++)
+                {
+                    for (int dy = -radius; dy <= radius; dy++)
+                    {
+                        if (Mathf.Abs(dx) != radius && Mathf.Abs(dy) != radius) continue;
+                        
+                        Vector2Int checkPos = from + new Vector2Int(dx, dy);
+                        if (Grid.TryGetValue(checkPos, out DungeonCell cell) && cell.IsOccupied)
+                        {
+                            return checkPos;
+                        }
+                    }
+                }
+            }
+            
+            return null;
+        }
+        
+        private void EnsureConnectivity()
+        {
+            if (Rooms.Count <= 1) return;
+            
+            // Find all connected components
+            HashSet<int> visitedRooms = new HashSet<int>();
+            List<List<int>> components = new List<List<int>>();
+            
+            foreach (var room in Rooms)
+            {
+                if (!visitedRooms.Contains(room.RoomID))
+                {
+                    List<int> component = new List<int>();
+                    FloodFillRooms(room.RoomID, visitedRooms, component);
+                    components.Add(component);
+                }
+            }
+            
+            // If we have multiple components, connect them
+            if (components.Count > 1)
+            {
+                // Connect each component to the first (main) component
+                for (int i = 1; i < components.Count; i++)
+                {
+                    ConnectComponents(components[0], components[i]);
+                }
+            }
+        }
+
+        private void FloodFillRooms(int roomId, HashSet<int> visited, List<int> component)
+        {
+            if (visited.Contains(roomId)) return;
+            
+            visited.Add(roomId);
+            component.Add(roomId);
+            
+            RoomData room = Rooms.Find(r => r.RoomID == roomId);
+            if (room == null) return;
+            
+            // Check all cells adjacent to this room
+            foreach (var cellPos in room.OccupiedCells)
+            {
+                Vector2Int[] neighbors = {
+                    cellPos + Vector2Int.up,
+                    cellPos + Vector2Int.down,
+                    cellPos + Vector2Int.left,
+                    cellPos + Vector2Int.right
+                };
+                
+                foreach (var neighbor in neighbors)
+                {
+                    if (Grid.TryGetValue(neighbor, out DungeonCell neighborCell))
+                    {
+                        // If it's a corridor, trace where it leads
+                        if (neighborCell.Type == CellType.Corridor)
+                        {
+                            HashSet<int> reachableRooms = TraceCorridorToRooms(neighbor);
+                            foreach (int reachableRoom in reachableRooms)
+                            {
+                                FloodFillRooms(reachableRoom, visited, component);
+                            }
+                        }
+                        // If it's another room, add it
+                        else if (neighborCell.Type == CellType.Room && neighborCell.RoomID != roomId)
+                        {
+                            FloodFillRooms(neighborCell.RoomID, visited, component);
+                        }
+                    }
+                }
+            }
+        }
+
+        private HashSet<int> TraceCorridorToRooms(Vector2Int startPos)
+        {
+            HashSet<int> reachableRooms = new HashSet<int>();
+            HashSet<Vector2Int> visitedCells = new HashSet<Vector2Int>();
+            Queue<Vector2Int> toVisit = new Queue<Vector2Int>();
+            
+            toVisit.Enqueue(startPos);
+            
+            while (toVisit.Count > 0)
+            {
+                Vector2Int current = toVisit.Dequeue();
+                if (visitedCells.Contains(current)) continue;
+                visitedCells.Add(current);
+                
+                if (!Grid.TryGetValue(current, out DungeonCell cell)) continue;
+                
+                if (cell.Type == CellType.Room)
+                {
+                    reachableRooms.Add(cell.RoomID);
+                }
+                else if (cell.Type == CellType.Corridor)
+                {
+                    // Continue tracing through corridors
+                    Vector2Int[] neighbors = {
+                        current + Vector2Int.up,
+                        current + Vector2Int.down,
+                        current + Vector2Int.left,
+                        current + Vector2Int.right
+                    };
+                    
+                    foreach (var neighbor in neighbors)
+                    {
+                        if (!visitedCells.Contains(neighbor))
+                        {
+                            toVisit.Enqueue(neighbor);
+                        }
+                    }
+                }
+            }
+            
+            return reachableRooms;
+        }
+
+        private void ConnectComponents(List<int> component1, List<int> component2)
+        {
+            // Find closest pair of rooms between components
+            RoomData room1 = null;
+            RoomData room2 = null;
+            float minDistance = float.MaxValue;
+            
+            foreach (int id1 in component1)
+            {
+                RoomData r1 = Rooms.Find(r => r.RoomID == id1);
+                if (r1 == null) continue;
+                
+                foreach (int id2 in component2)
+                {
+                    RoomData r2 = Rooms.Find(r => r.RoomID == id2);
+                    if (r2 == null) continue;
+                    
+                    float dist = Vector2Int.Distance(r1.GetCenter(), r2.GetCenter());
+                    if (dist < minDistance)
+                    {
+                        minDistance = dist;
+                        room1 = r1;
+                        room2 = r2;
+                    }
+                }
+            }
+            
+            if (room1 != null)
+            {
+                // Create a corridor between them
+                CreateDirectCorridor(room1.GetCenter(), room2.GetCenter());
+            }
+        }
+
+        private void CreateDirectCorridor(Vector2Int from, Vector2Int to)
+        {
+            Vector2Int current = from;
+            
+            // Create L-shaped corridor (horizontal then vertical)
+            while (current.x != to.x)
+            {
+                current.x += (to.x > current.x) ? 1 : -1;
+                
+                DungeonCell cell = GetOrCreateCell(current);
+                if (cell.Type == CellType.Empty)
+                {
+                    cell.Type = CellType.Corridor;
+                    cell.IsOccupied = true;
+                    cell.FloorLevel = _currentFloor;
+                }
+            }
+            
+            while (current.y != to.y)
+            {
+                current.y += (to.y > current.y) ? 1 : -1;
+                
+                DungeonCell cell = GetOrCreateCell(current);
+                if (cell.Type == CellType.Empty)
+                {
+                    cell.Type = CellType.Corridor;
+                    cell.IsOccupied = true;
+                    cell.FloorLevel = _currentFloor;
+                }
             }
         }
 
@@ -324,24 +575,39 @@ namespace Didionysymus.DungeonGeneration.LSystem
         private Vector2Int FindValidRoomPosition(Vector2Int size)
         {
             // Try the current position first
-            Vector2Int testPosition = _currentState.Position;
+            Vector2Int centerOffset = new Vector2Int(size.x / 2, size.y / 2);
+            Vector2Int testPosition = _currentState.Position - centerOffset;
 
             // Exit case - this position is valid
             if (CanPlaceRoom(testPosition, size)) return testPosition;
 
-            for (int distance = 1; distance <= 10; distance++)
+            for (int radius = 1; radius <= 15; radius++)
             {
-                // Try moving forward in the current direction
-                testPosition = _currentState.Position;
-                for (int i = 0; i < distance; i++)
+                // Try positions in a square ring around the current position
+                for (int dx = -radius; dx <= radius; dx++)
                 {
-                    testPosition = MoveForward(testPosition, _currentState.Facing);
-                }
+                    for (int dy = -radius; dy <= radius; dy++)
+                    {
+                        // Only check the perimeter of the square
+                        if(Mathf.Abs(dx) != radius && Mathf.Abs(dy) != radius) continue;
+                        
+                        testPosition = _currentState.Position + new Vector2Int(dx, dy) - centerOffset;
 
-                // Exit case - this position is valid
-                if (CanPlaceRoom(testPosition, size)) return testPosition;
+                        if (CanPlaceRoom(testPosition, size)) return testPosition;
+                    }
+                }
             }
 
+            // If there's still no valid position, try with a smaller room
+            if (size.x > _config.MinRoomSize.x || size.y > _config.MinRoomSize.y)
+            {
+                Vector2Int smallerSize = new Vector2Int(
+                    Mathf.Max(_config.MinRoomSize.x, size.x - 1),
+                    Mathf.Max(_config.MinRoomSize.y, size.y - 1)
+                );
+                return FindValidRoomPosition(smallerSize);
+            }
+            
             // Invalid position marker
             return Vector2Int.one * -1000;
         }
@@ -508,36 +774,6 @@ namespace Didionysymus.DungeonGeneration.LSystem
             landingCell.FloorLevel = _currentFloor;
         }
 
-        private bool TryFindAdjacentRoom(Vector2Int position, out Vector2Int roomCellPosition,
-            out Direction facingIntoRoom, out RoomData room)
-        {
-            // Check left, right, forward, and back neighbor to the current position
-            (Vector2Int, Direction)[] checks =
-            {
-                (Vector2Int.up, Direction.North),
-                (Vector2Int.down, Direction.South),
-                (Vector2Int.right, Direction.East),
-                (Vector2Int.left, Direction.West)
-            };
-
-            foreach ((Vector2Int offset, Direction facing) in checks)
-            {
-                DungeonCell neighbor = GetCell(position + offset);
-                if(neighbor is { IsOccupied: true, Type: CellType.Room })
-                {
-                    roomCellPosition = neighbor.GridPosition;
-                    facingIntoRoom = facing;
-                    room = Rooms.Find(r => r.RoomID == neighbor.RoomID);
-                    return room != null;
-                }
-            }
-
-            roomCellPosition = default;
-            facingIntoRoom = Direction.North;
-            room = null;
-            return false;
-        }
-
         /// <summary>
         /// Calculates the new position by moving forward in the specified direction from the given position
         /// </summary>
@@ -616,6 +852,233 @@ namespace Didionysymus.DungeonGeneration.LSystem
             }
         }
 
+        private void CreateDoors()
+        {
+            // Clear existing door data
+            foreach (RoomData room in Rooms)
+            {
+                room.DoorPositions.Clear();
+                room.DoorDirections.Clear();
+            }
+
+            foreach (RoomData room in Rooms)
+            {
+                Dictionary<Direction, List<Vector2Int>> wallSegments = GetRoomWallSegments(room);
+
+                foreach (KeyValuePair<Direction, List<Vector2Int>> kvp in wallSegments)
+                {
+                    Direction wallDirection = kvp.Key;
+                    List<Vector2Int> wallCells = kvp.Value;
+
+                    if (wallCells.Count == 0) continue;
+                    
+                    // Find corridors or other rooms adjacent to this cell
+                    List<Vector2Int> validDoorPositions = new List<Vector2Int>();
+
+                    foreach (Vector2Int wallCell in wallCells)
+                    {
+                        Vector2Int outsidePosition = GetAdjacentPosition(wallCell, wallDirection);
+                        if (!Grid.TryGetValue(outsidePosition, out DungeonCell outsideCell)) continue;
+
+                        if (outsideCell.IsOccupied && (outsideCell.Type == CellType.Corridor ||
+                                                       outsideCell.Type == CellType.Room &&
+                                                       outsideCell.RoomID != room.RoomID))
+                        {
+                            validDoorPositions.Add(wallCell);
+                        }
+                    }
+
+                    if (validDoorPositions.Count > 0)
+                    {
+                        PlaceCenteredDoor(room, wallDirection, validDoorPositions);
+                    }
+                }
+            }
+        }
+
+        private Dictionary<Direction, List<Vector2Int>> GetRoomWallSegments(RoomData room)
+        {
+            Dictionary<Direction, List<Vector2Int>> segments = new Dictionary<Direction, List<Vector2Int>>
+            {
+                { Direction.North, new List<Vector2Int>() },
+                { Direction.South, new List<Vector2Int>() },
+                { Direction.East, new List<Vector2Int>() },
+                { Direction.West, new List<Vector2Int>() }
+            };
+            
+            // North wall
+            for (int x = 0; x < room.Size.x; x++)
+            {
+                segments[Direction.North].Add(room.GridPosition + new Vector2Int(x, room.Size.y - 1));
+            }
+            
+            // South wall
+            for (int x = 0; x < room.Size.x; x++)
+            {
+                segments[Direction.South].Add(room.GridPosition + new Vector2Int(x, 0));
+            }
+            
+            // East wall
+            for (int y = 0; y < room.Size.y; y++)
+            {
+                segments[Direction.East].Add(room.GridPosition + new Vector2Int(room.Size.x - 1, y));
+            }
+            
+            // West wall
+            for (int y = 0; y < room.Size.y; y++)
+            {
+                segments[Direction.West].Add(room.GridPosition + new Vector2Int(0, y));
+            }
+
+            return segments;
+        }
+
+        private void PlaceCenteredDoor(RoomData room, Direction wallDirection, List<Vector2Int> validPositions)
+        {
+            // Check if any position on this wall already has a door to ANY adjacent area
+            foreach (Vector2Int pos in validPositions)
+            {
+                Vector2Int outsidePos = GetAdjacentPosition(pos, wallDirection);
+                if (HasDoorBetween(outsidePos, pos))
+                {
+                    return; // A door already exists on this wall
+                }
+            }
+            
+            // Skip corners if possible
+            List<Vector2Int> nonCornerPositions = new List<Vector2Int>();
+            
+            foreach (Vector2Int position in validPositions)
+            {
+                bool isCorner = IsCornerPosition(room, position);
+                if(!isCorner) nonCornerPositions.Add(position);
+            }
+            
+            // Use non-corner positions if available
+            List<Vector2Int> positionsToUse = nonCornerPositions.Count > 0 ? nonCornerPositions : validPositions;
+            
+            // Find continuous segments
+            List<List<Vector2Int>> segments = FindContinuousSegments(positionsToUse, wallDirection);
+            
+            // Place only one door for the entire wall
+            if (segments.Count > 0)
+            {
+                // Find the longest segment
+                List<Vector2Int> longestSegment = segments[0];
+                foreach (var segment in segments)
+                {
+                    if (segment.Count > longestSegment.Count)
+                        longestSegment = segment;
+                }
+                
+                if (longestSegment.Count > 0)
+                {
+                    // Get the center position of the longest segment
+                    int centerIndex = longestSegment.Count / 2;
+                    Vector2Int doorPosition = longestSegment[centerIndex];
+                    
+                    // Add the door (outside position pointing into the room)
+                    Vector2Int outsidePos = GetAdjacentPosition(doorPosition, wallDirection);
+                    
+                    // Double-check one more time before adding
+                    if (!HasDoorBetween(outsidePos, doorPosition))
+                    {
+                        room.DoorPositions.Add(outsidePos);
+                        room.DoorDirections.Add(Opposite(wallDirection));
+                    }
+                }
+            }
+        }
+        
+        private bool WallAlreadyHasConnectionTo(RoomData room, Direction wallDirection, List<Vector2Int> positions)
+        {
+            // Get what's on the other side of this wall
+            if (positions.Count == 0) return false;
+    
+            Vector2Int samplePos = GetAdjacentPosition(positions[0], wallDirection);
+            if (!Grid.TryGetValue(samplePos, out DungeonCell outsideCell)) return false;
+    
+            // Check if we already have a door to this specific area
+            for (int i = 0; i < room.DoorPositions.Count; i++)
+            {
+                if (room.DoorDirections[i] == Opposite(wallDirection))
+                {
+                    // Check if this door leads to the same room/corridor
+                    Vector2Int existingDoorPos = room.DoorPositions[i];
+                    if (Grid.TryGetValue(existingDoorPos, out DungeonCell existingDoorCell))
+                    {
+                        // If both lead to corridors or to the same room, we already have a connection
+                        if ((outsideCell.Type == CellType.Corridor && existingDoorCell.Type == CellType.Corridor) ||
+                            (outsideCell.RoomID == existingDoorCell.RoomID && outsideCell.RoomID != -1))
+                        {
+                            return true;
+                        }
+                    }
+                }
+            }
+    
+            return false;
+        }
+
+        private bool IsCornerPosition(RoomData room, Vector2Int position)
+        {
+            Vector2Int relativePos = position - room.GridPosition;
+    
+            bool isXEdge = (relativePos.x == 0 || relativePos.x == room.Size.x - 1);
+            bool isYEdge = (relativePos.y == 0 || relativePos.y == room.Size.y - 1);
+    
+            return isXEdge && isYEdge;
+        }
+        
+        private List<List<Vector2Int>> FindContinuousSegments(List<Vector2Int> positions, Direction wallDirection)
+        {
+            if (positions.Count == 0) return new List<List<Vector2Int>>();
+    
+            // Sort positions based on wall direction
+            positions.Sort((a, b) => 
+            {
+                if (wallDirection == Direction.North || wallDirection == Direction.South)
+                    return a.x.CompareTo(b.x);
+                else
+                    return a.y.CompareTo(b.y);
+            });
+    
+            List<List<Vector2Int>> segments = new List<List<Vector2Int>>();
+            List<Vector2Int> currentSegment = new List<Vector2Int> { positions[0] };
+    
+            for (int i = 1; i < positions.Count; i++)
+            {
+                int distance = (wallDirection == Direction.North || wallDirection == Direction.South) 
+                    ? Mathf.Abs(positions[i].x - positions[i-1].x)
+                    : Mathf.Abs(positions[i].y - positions[i-1].y);
+        
+                if (distance == 1)
+                {
+                    currentSegment.Add(positions[i]);
+                }
+                else
+                {
+                    segments.Add(new List<Vector2Int>(currentSegment));
+                    currentSegment = new List<Vector2Int> { positions[i] };
+                }
+            }
+    
+            segments.Add(currentSegment);
+            return segments;
+        }
+        
+        private Vector2Int GetAdjacentPosition(Vector2Int pos, Direction direction)
+        {
+            return direction switch
+            {
+                Direction.North => pos + Vector2Int.up,
+                Direction.South => pos + Vector2Int.down,
+                Direction.East => pos + Vector2Int.right,
+                Direction.West => pos + Vector2Int.left,
+                _ => pos
+            };
+        }
+
         private void SetWall(Direction direction, Vector2Int position, DungeonCell cell)
         {
             Vector2Int vectorDirection = direction switch
@@ -626,7 +1089,7 @@ namespace Didionysymus.DungeonGeneration.LSystem
                 Direction.West => Vector2Int.left,
                 _ => Vector2Int.zero
             };
-            
+    
             Vector2Int neighborPosition = position + vectorDirection;
             DungeonCell neighbor = GetCell(neighborPosition);
 
@@ -637,7 +1100,7 @@ namespace Didionysymus.DungeonGeneration.LSystem
                 ApplyWall(cell, direction, true);
                 return;
             }
-            
+    
             // Interior of the same room: no wall
             bool bothRooms = cell.Type == CellType.Room && neighbor.Type == CellType.Room;
             if (bothRooms && cell.RoomID == neighbor.RoomID)
@@ -646,39 +1109,14 @@ namespace Didionysymus.DungeonGeneration.LSystem
                 return;
             }
 
+            // Different rooms: check if door exists
             if (bothRooms && cell.RoomID != neighbor.RoomID)
             {
                 bool hasDoor = HasDoorBetween(position, neighborPosition);
-
-                // Only have one doorway per shared wall as a stable "leader"
-                bool isLeadingDoor = position.x < neighborPosition.x ||
-                               (position.x == neighborPosition.x && position.y < neighborPosition.y);
-
-                // Check if a door is not already recorded for this edge
-                if (!hasDoor && isLeadingDoor)
-                {
-                    // Find the room data for the neighbor room
-                    RoomData room = Rooms.Find(r => r.RoomID == neighbor.RoomID);
-                    
-                    // Get the direction from this room to the neighboring room
-                    Direction face = direction;
-
-                    // Check if the neighboring room exists
-                    if (room != null && !RoomAlreadyHasDoorOnWall(room, face))
-                    {
-                        // Get the direction from the current room 'outside'
-                        // toward the neighboring room 'inside'
-                        room.DoorPositions.Add(position);
-                        room.DoorDirections.Add(face);
-                        hasDoor = true;
-                    }
-                }
-                
-                // With a door recorded, keep the edge open
                 ApplyWall(cell, direction, !hasDoor);
+                return;
             }
-            
-            
+    
             // If two corridors are next to each other, don't have any walls between them
             bool corridorEdge = cell.Type == CellType.Corridor && neighbor.Type == CellType.Corridor;
             if (corridorEdge)
@@ -686,12 +1124,11 @@ namespace Didionysymus.DungeonGeneration.LSystem
                 ApplyWall(cell, direction, false);
                 return;
             }
-            
-            // Room edge: one side is a room, or two different rooms
+    
+            // Room edge: check for existing doors
             bool isRoomEdge = cell.Type == CellType.Room || neighbor.Type == CellType.Room;
             if (isRoomEdge)
             {
-                // Keep a wall unless a door is recorded
                 bool hasDoor = HasDoorBetween(position, neighborPosition);
                 ApplyWall(cell, direction, !hasDoor);
                 return;

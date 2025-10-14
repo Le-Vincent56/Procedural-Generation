@@ -13,24 +13,24 @@ MonoBehaviour:
   m_Name: DungeonConfig
   m_EditorClassIdentifier: 
   Seed: 12345
-  Iterations: 4
+  Iterations: 8
   OneCellBuffer: 0
   MaxGridSize: {x: 200, y: 200}
   NumberOfFloors: 1
-  MinRoomSize: {x: 3, y: 3}
-  MaxRoomSize: {x: 5, y: 5}
+  MinRoomSize: {x: 4, y: 4}
+  MaxRoomSize: {x: 6, y: 6}
   SmallRoomChance: 0.5
   MediumRoomChance: 0.35
   LargeRoomChance: 0.15
   BossRoomCount: 1
   TreasureRoomCount: 2
   SafeRoomCount: 2
-  MinCorridorLength: 3
-  MaxCorridorLength: 5
+  MinCorridorLength: 2
+  MaxCorridorLength: 3
   CorridorWidth: 2
   DesiredFill: 1
   DungeonDensity: 0.9
-  BranchingChance: 0.2
+  BranchingChance: 0.6
   CellSize: 2
   FloorHeightCells: 3
   Floors: 3
