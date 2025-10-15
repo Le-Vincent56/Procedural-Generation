@@ -29,38 +29,35 @@ namespace Didionysymus.DungeonGeneration.LSystem
         [Header("General Settings")]
         [SerializeField] private float WallOffset = 0.4f;
         [SerializeField] private float CenterSpacing = 0.8f;
-        [SerializeField] private bool RandomRotation = true;
         
         [Header("References")]
-        [SerializeField] private DungeonGenerator Generator;
         [SerializeField] private Transform Parent;
 
+        private Transform _dungeonParent;
+
+        private DungeonGenerator _generator;
         private Random _random;
 
-        private void Start()
+        public void Initialize(DungeonGenerator generator, Transform dungeonParent)
         {
-            // Get the generator component if it does not exist
-            if(Generator == null) 
-            {
-                Generator = GetComponent<DungeonGenerator>();
-            }
+            _generator = generator;
+            _dungeonParent = dungeonParent;
         }
 
         /// <summary>
         /// Places props across all rooms in the dungeon based on the current dungeon generator's configuration
         /// </summary>
-        [ContextMenu("Place Props")]
         public void PlaceProps()
         {
             // Exit case - no DungeonGenerator component
-            if (!Generator)
+            if (!_generator)
             {
                 Debug.LogError("DungeonGenerator component not found");
                 return;
             }
 
-            List<RoomData> rooms = Generator.Rooms;
-            DungeonConfig config = Generator.Configuration;
+            List<RoomData> rooms = _generator.Rooms;
+            DungeonConfig config = _generator.Configuration;
 
             // Exit case - no rooms found
             if (rooms == null || rooms.Count == 0)
@@ -73,6 +70,7 @@ namespace Didionysymus.DungeonGeneration.LSystem
             if(!Parent) 
             {
                 Parent = new GameObject("Props").transform;
+                Parent.SetParent(_dungeonParent);
             }
             
             // Clear existing props
@@ -109,12 +107,12 @@ namespace Didionysymus.DungeonGeneration.LSystem
         {
             // Find matching prop sets for this room type
             List<PropSet> matchingSets = PropSets.FindAll(set =>
-                set.TargetRoomType == room.Type || set.TargetRoomType == RoomType.Standard);
+                set.TargetRoomType == room.Type);
 
             // Exit case - no matching sets for this room type found
             if (matchingSets.Count == 0) return;
             
-            // Use first matching set
+            // Use the first matching set
             PropSet propSet = matchingSets[0];
 
             // Exit case - no prop prefabs found for this set
@@ -122,7 +120,7 @@ namespace Didionysymus.DungeonGeneration.LSystem
             
             // Place props
             if (propSet.PlaceOnWalls) PlacePropsOnWalls(room, propSet, config);
-            if(propSet.PlaceInCenter) PlacePropsInCenter(room, propSet, config);
+            if (propSet.PlaceInCenter) PlacePropsInCenter(room, propSet, config);
         }
 
         /// <summary>
@@ -133,7 +131,7 @@ namespace Didionysymus.DungeonGeneration.LSystem
         /// <param name="config">The dungeon configuration that defines global dungeon settings and parameters for placement</param>
         private void PlacePropsOnWalls(RoomData room, PropSet propSet, DungeonConfig config)
         {
-            Dictionary<Vector2Int, DungeonCell> grid = Generator.Grid;
+            Dictionary<Vector2Int, DungeonCell> grid = _generator.Grid;
             
             // Iterate through room perimeter cells
             for (int x = 0; x < room.Size.x; x++)
@@ -232,10 +230,22 @@ namespace Didionysymus.DungeonGeneration.LSystem
         /// <param name="config">The dungeon configuration providing global settings for the dungeon generation process</param>
         private void PlacePropsInCenter(RoomData room, PropSet propSet, DungeonConfig config)
         {
-            // Exit case - the room is smaller than 3x3
-            if (room.Size.x <= 3 || room.Size.y <= 3) return;
+            // If there's only one prop, always place in the center
+            if (propSet.PropPrefabs.Count == 1)
+            {
+                Vector3 propPosition = room.GetWorldCenter(config.CellSize, config.FloorHeightUnits);
+                propPosition += new Vector3(0, 6.1f, 0);
+                
+                // Select a random prop
+                GameObject propPrefab = propSet.PropPrefabs[_random.Next(propSet.PropPrefabs.Count)];
+                
+                // Instantiate the prop
+                GameObject prop = Instantiate(propPrefab, propPosition, Quaternion.identity, Parent);
+                prop.name = $"Prop_Center_{propPrefab.name}";
+                return;
+            }
 
-            // Calculate how many props to palce based on room size and placement density
+            // Calculate how many props to place based on room size and placement density
             int maxProps = Mathf.FloorToInt(room.Size.x * room.Size.y * propSet.PlacemenDensity * 0.1f);
             maxProps = Mathf.Clamp(maxProps, 0, 5);
             
@@ -246,35 +256,14 @@ namespace Didionysymus.DungeonGeneration.LSystem
                 float zOffset = ((float)_random.NextDouble() - 0.5f) * (room.Size.y - 2) * config.CellSize;
                 
                 Vector3 propPosition = room.GetWorldCenter(config.CellSize, config.FloorHeightUnits);
-                propPosition += new Vector3(xOffset, 0, zOffset);
-                
-                // Random rotation if enabled
-                Quaternion propRotation = RandomRotation 
-                    ? Quaternion.Euler(0, (float)_random.NextDouble() * 360f, 0)
-                    : Quaternion.identity;
+                propPosition += new Vector3(xOffset, 6.1f, zOffset);
                 
                 // Select a random prop
                 GameObject propPrefab = propSet.PropPrefabs[_random.Next(propSet.PropPrefabs.Count)];
                 
                 // Instantiate the prop
-                GameObject prop = Instantiate(propPrefab, propPosition, propRotation, Parent);
+                GameObject prop = Instantiate(propPrefab, propPosition, Quaternion.identity, Parent);
                 prop.name = $"Prop_Center_{propPrefab.name}_{i}";
-            }
-        }
-
-        /// <summary>
-        /// Clears all existing props from the dungeon by removing child objects from the assigned parent transform
-        /// </summary>
-        [ContextMenu("Clear Props")]
-        public void ClearProps()
-        {
-            // Exit case - no Parent is assigned
-            if (Parent == null) return;
-            
-            // Destroy each child object
-            foreach (Transform child in Parent)
-            {
-                Destroy(child.gameObject);
             }
         }
     }

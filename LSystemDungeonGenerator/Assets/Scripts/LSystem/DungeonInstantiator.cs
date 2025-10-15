@@ -18,7 +18,7 @@ namespace Didionysymus.DungeonGeneration.LSystem
         [SerializeField] private GameObject CeilingPrefab;
         
         [Header("Organization")]
-        [SerializeField] private Transform Parent;
+        [SerializeField] public Transform Parent;
 
         private Transform _floorsParent;
         private Transform _wallsParent;

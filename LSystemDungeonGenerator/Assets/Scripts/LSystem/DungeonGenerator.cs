@@ -16,6 +16,7 @@ namespace Didionysymus.DungeonGeneration.LSystem
         
         [Header("Components")]
         [SerializeField] private DungeonInstantiator Instantiator;
+        [SerializeField] private PropPlacer PropPlacer;
         
         [Header("Runtime Controls")]
         [SerializeField] private bool GenerateOnStart = false;
@@ -23,7 +24,8 @@ namespace Didionysymus.DungeonGeneration.LSystem
         private LSystemGrammar _grammar;
         private DungeonTurtle _turtle;
         private string _generatedString;
-
+        
+        
         public DungeonConfig Configuration => Config;
         public Dictionary<Vector2Int, DungeonCell> Grid { get; private set; }
         public List<RoomData> Rooms { get; private set; }
@@ -67,6 +69,20 @@ namespace Didionysymus.DungeonGeneration.LSystem
                     return;
                 }
             }
+            
+            // Check if a PropPlacer is serialized
+            if (!PropPlacer)
+            {
+                // Attempt to find the PropPlacer component
+                PropPlacer = GetComponent<PropPlacer>();
+
+                // Exit case - no PropPlacer component found
+                if (!PropPlacer)
+                {
+                    Debug.LogError("PropPlacer component not found");
+                    return;   
+                }
+            }
 
             float startTime = Time.realtimeSinceStartup;
             
@@ -81,6 +97,9 @@ namespace Didionysymus.DungeonGeneration.LSystem
             
             // Initialize Instantiator
             Instantiator.Initialize(Config, _turtle);
+            
+            // Initialize PropPlacer
+            PropPlacer.Initialize(this, Instantiator.Parent);
             
             // Generate the L-system string
             _generatedString = _grammar.Generate();
@@ -115,6 +134,9 @@ namespace Didionysymus.DungeonGeneration.LSystem
             {
                 Instantiator.DebugDrawGrid(Grid);
             }
+            
+            // Generate the props
+            PropPlacer.PlaceProps();
             
             float endTime = Time.realtimeSinceStartup;
             Debug.Log($"Dungeon generation took {endTime - startTime} seconds");

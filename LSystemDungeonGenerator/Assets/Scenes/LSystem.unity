@@ -262,6 +262,7 @@ MonoBehaviour:
   m_EditorClassIdentifier: 
   Config: {fileID: 11400000, guid: 73485926573487f4fba5428fe226a437, type: 2}
   Instantiator: {fileID: 1351406666}
+  PropPlacer: {fileID: 1351406669}
   GenerateOnStart: 1
 --- !u!4 &1351406668
 Transform:
@@ -290,11 +291,39 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 866af7737edc4bc48bfb69084982f3a7, type: 3}
   m_Name: 
   m_EditorClassIdentifier: 
-  PropSets: []
+  PropSets:
+  - Name: Safe Rooms
+    PropPrefabs:
+    - {fileID: 3426929291102036688, guid: b378294b797d2bd499b6cf0efdf153ce, type: 3}
+    TargetRoomType: 4
+    PlacemenDensity: 0.4
+    PlaceOnWalls: 0
+    PlaceInCenter: 1
+  - Name: Standard Rooms
+    PropPrefabs:
+    - {fileID: 6822806117096688099, guid: 3ba46a8002fc5dc46b421525a4dc7fc4, type: 3}
+    - {fileID: 7938550141863839660, guid: 7be70ef42501d31468ab73362837c001, type: 3}
+    - {fileID: 8880579018277960557, guid: 68d3a5da0abcdfa4a8fb745e61d7274f, type: 3}
+    TargetRoomType: 0
+    PlacemenDensity: 0.4
+    PlaceOnWalls: 0
+    PlaceInCenter: 1
+  - Name: Treasure Rooms
+    PropPrefabs:
+    - {fileID: 1270200691094400241, guid: 1ef689caa0aa3884b87a288c34b1743f, type: 3}
+    TargetRoomType: 3
+    PlacemenDensity: 0.4
+    PlaceOnWalls: 0
+    PlaceInCenter: 1
+  - Name: All Walls
+    PropPrefabs:
+    - {fileID: 7723819420044493729, guid: 7b161c7322eb4434d9589c220a490f31, type: 3}
+    TargetRoomType: 0
+    PlacemenDensity: 0.4
+    PlaceOnWalls: 1
+    PlaceInCenter: 0
   WallOffset: 0.4
   CenterSpacing: 0.8
-  RandomRotation: 1
-  Generator: {fileID: 0}
   Parent: {fileID: 0}
 --- !u!1 &2124461909
 GameObject:
