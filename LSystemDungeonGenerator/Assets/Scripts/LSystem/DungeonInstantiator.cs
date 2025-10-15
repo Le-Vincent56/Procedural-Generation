@@ -1,5 +1,7 @@
+using System;
 using System.Collections.Generic;
 using UnityEngine;
+using Random = UnityEngine.Random;
 
 namespace Didionysymus.DungeonGeneration.LSystem
 {
@@ -340,7 +342,12 @@ namespace Didionysymus.DungeonGeneration.LSystem
                     break;
             }
         }
-        
+
+        /// <summary>
+        /// Places ceiling tiles for rooms and corridors based on the provided grid and room data
+        /// </summary>
+        /// <param name="grid">The grid containing the dungeon cells and their occupancy data</param>
+        /// <param name="rooms">The list of room data representing rooms in the dungeon layout</param>
         private void PlaceCeilings(Dictionary<Vector2Int, DungeonCell> grid, List<RoomData> rooms)
         {
             // Exit case - no ceiling prefab
@@ -404,23 +411,34 @@ namespace Didionysymus.DungeonGeneration.LSystem
         {
             foreach (KeyValuePair<Vector2Int, DungeonCell> kvp in grid)
             {
-                // Extract the Dungeon Cell
                 DungeonCell cell = kvp.Value;
-
-                // Skip over un-occupied cells
-                if (!cell.IsOccupied) continue;
-                
                 Vector3 worldPosition = cell.GetWorldPosition(_config.CellSize, _config.FloorHeightUnits);
+                Color gizmoColor;
 
-                Color cellColor = cell.Type switch
+                if (cell.Type is CellType.Room)
                 {
-                    CellType.Room => Color.green,
-                    CellType.Corridor => Color.blue,
-                    CellType.Door => Color.yellow,
-                    _ => Color.white
-                };
-                
-                Debug.DrawRay(worldPosition, Vector3.up, cellColor, 10f);
+                    RoomData room = _turtle.Rooms.Find(r => r.RoomID == cell.RoomID);
+                    gizmoColor = room.Type switch
+                    {
+                        RoomType.Standard => Color.white,
+                        RoomType.Start => Color.green,
+                        RoomType.Boss => Color.red,
+                        RoomType.Treasure => Color.yellow,
+                        RoomType.Safe => Color.magenta,
+                        _ => Color.white
+                    };
+                }
+                else
+                {
+                    gizmoColor = cell.Type switch
+                    {
+                        CellType.Corridor => Color.blue,
+                        CellType.Door => Color.magenta,
+                        _ => Color.white
+                    };
+                }
+
+                Debug.DrawRay(worldPosition, Vector3.up * _config.CellSize, gizmoColor, 10f);
             }
         }
     }

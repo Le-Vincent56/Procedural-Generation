@@ -2,6 +2,9 @@ using UnityEngine;
 
 namespace Didionysymus.DungeonGeneration.LSystem
 {
+    /// <summary>
+    /// Represents the configuration for procedurally generating a dungeon using an L-System approach
+    /// </summary>
     [CreateAssetMenu(fileName = "DungeonConfig", menuName = "L-System/Dungeon Config")]
     public class DungeonConfig : ScriptableObject
     {
@@ -9,13 +12,6 @@ namespace Didionysymus.DungeonGeneration.LSystem
         [Tooltip("Random seed for generation (0 = random)")]
         public int Seed = 0;
         public int Iterations = 3;
-        
-        [Tooltip("Whether to place a 1-cell buffer around rooms and corridors")]
-        public bool OneCellBuffer = true;
-        
-        [Header("Dungeon Size")]
-        public Vector2Int MaxGridSize = new Vector2Int(50, 50);
-        public int NumberOfFloors = 1;
         
         [Header("Room Settings")]
         public Vector2Int MinRoomSize = new Vector2Int(3, 3);
@@ -35,10 +31,10 @@ namespace Didionysymus.DungeonGeneration.LSystem
         public int MaxCorridorLength = 6;
         
         [Header("Physical Dimensions")]
+        public Vector2Int MaxGridSize = new Vector2Int(50, 50);
         [Tooltip("The size of one grid cell in world units")]
         public float CellSize = 1f;
         public float FloorHeightCells = 3f;
-        public int Floors = 3;
         public float FloorHeightUnits => FloorHeightCells * CellSize;
         
         [Header("L-System Grammar")]

@@ -4,6 +4,11 @@ using UnityEngine;
 
 namespace Didionysymus.DungeonGeneration.LSystem
 {
+    /// <summary>
+    /// Represents a grammar-based implementation of an L-System for procedural dungeon generation;
+    /// this class handles the creation of a string representation of a dungeon based on configurable rules,
+    /// which serves as the foundation for generating dungeon layouts
+    /// </summary>
     public class LSystemGrammar
     {
         private Dictionary<char, List<string>> _expansionRules;
@@ -35,8 +40,10 @@ namespace Didionysymus.DungeonGeneration.LSystem
             AddRule('R', "R");      // Room stays as a room
             AddRule('R', "R");      // Add weight
             AddRule('R', "CR");     // Room to corridor to room
-            AddRule('R', "C[+R]");  // Room with a branch
-            AddRule('R', "C[-R]");
+            AddRule('R', "RC[+R]");  // Room with a branch
+            AddRule('R', "RC[-R]");  // Room with a branch
+            AddRule('R', "RC[+CR]");
+            AddRule('R', "RC[-CR]");
             
             // Corridors can lead to rooms or more corridors
             AddRule('C', "C");      // Single corridor segment
@@ -47,6 +54,7 @@ namespace Didionysymus.DungeonGeneration.LSystem
             AddRule('B', "B");  // Boss Room
             AddRule('T', "T");  // Treasure Room
             AddRule('F', "F");  // Safe Room
+            AddRule('X', "X"); // Start room
         }
 
         /// <summary>
@@ -187,6 +195,9 @@ namespace Didionysymus.DungeonGeneration.LSystem
                 output[roomPositions[positionIndex]] = 'F';
             }
 
+            // Set the start room
+            output[roomPositions[positionIndex]] = 'X';
+
             return output.ToString();
         }
 
@@ -244,16 +255,6 @@ namespace Didionysymus.DungeonGeneration.LSystem
         public int GetRandomCorridorLength()
         {
             return _random.Next(_config.MinCorridorLength, _config.MaxCorridorLength + 1);
-        }
-
-        public float NextFloat(float min, float max)
-        {
-            return min + (float)_random.NextDouble() * (max - min);
-        }
-
-        public bool RandomChance(float probability)
-        {
-            return _random.NextDouble() < probability;
         }
     }
 }

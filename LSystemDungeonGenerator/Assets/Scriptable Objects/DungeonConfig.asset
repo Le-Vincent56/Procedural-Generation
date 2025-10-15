@@ -12,27 +12,21 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 89d11684d61bfdd40a50693a1cc425eb, type: 3}
   m_Name: DungeonConfig
   m_EditorClassIdentifier: 
-  Seed: 12345
-  Iterations: 8
-  OneCellBuffer: 0
-  MaxGridSize: {x: 200, y: 200}
-  NumberOfFloors: 1
+  Seed: 91604
+  Iterations: 5
   MinRoomSize: {x: 4, y: 4}
   MaxRoomSize: {x: 6, y: 6}
   SmallRoomChance: 0.5
   MediumRoomChance: 0.35
   LargeRoomChance: 0.15
+  DoorChance: 0.5
   BossRoomCount: 1
   TreasureRoomCount: 2
   SafeRoomCount: 2
-  MinCorridorLength: 2
-  MaxCorridorLength: 3
-  CorridorWidth: 2
-  DesiredFill: 1
-  DungeonDensity: 0.9
-  BranchingChance: 0.6
+  MinCorridorLength: 3
+  MaxCorridorLength: 6
+  MaxGridSize: {x: 200, y: 200}
   CellSize: 2
   FloorHeightCells: 3
-  Floors: 3
   CustomAxiom: 
   Debug: 1

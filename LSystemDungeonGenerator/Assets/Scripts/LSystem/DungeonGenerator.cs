@@ -40,7 +40,7 @@ namespace Didionysymus.DungeonGeneration.LSystem
         }
 
         /// <summary>
-        /// Generates a dungeon by utilizing L-System procedural generation rules;
+        /// Generates a dungeon by using L-System procedural generation rules;
         /// configures the dungeon generation based on the provided settings, constructs the spatial structure,
         /// and instantiates the final representation in the scene. Includes debugging information if enabled.
         /// </summary>
@@ -126,7 +126,7 @@ namespace Didionysymus.DungeonGeneration.LSystem
         /// <summary>
         /// Logs the statistics of the rooms generated in the dungeon;
         /// this includes the count of each room type, such as Start Rooms,
-        /// Standard Rooms, Boss Rooms, Treasure Rooms, and Safe Rooms.
+        /// Standard Rooms, Boss Rooms, Treasure Rooms, and Safe Rooms
         /// </summary>
         private void PrintRoomStatistics()
         {

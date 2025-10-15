@@ -5,6 +5,11 @@ using Random = System.Random;
 
 namespace Didionysymus.DungeonGeneration.LSystem
 {
+    /// <summary>
+    /// The PropPlacer class is responsible for placing props in dungeon rooms generated
+    /// by the DungeonGenerator; it provides functionality to clear and populate props
+    /// in rooms based on configuration settings, such as room types and densities
+    /// </summary>
     public class PropPlacer : MonoBehaviour
     {
         [Serializable]

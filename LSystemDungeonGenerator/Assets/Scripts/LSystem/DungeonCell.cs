@@ -7,15 +7,15 @@ namespace Didionysymus.DungeonGeneration.LSystem
         Empty,
         Room,
         Corridor,
-        Door,
-        Stairs,
-        StairLanding
+        Door
     }
-    
+
+    /// <summary>
+    /// Represents an individual cell within a dungeon grid
+    /// </summary>
     public class DungeonCell
     {
         public Vector2Int GridPosition { get; set; }
-        public int FloorLevel { get; set; }
         public CellType Type { get; set; }
         public bool IsOccupied { get; set; }
         public int RoomID { get; set; }
@@ -25,10 +25,9 @@ namespace Didionysymus.DungeonGeneration.LSystem
         public bool HasWallEast { get; set; }
         public bool HasWallWest { get; set; }
 
-        public DungeonCell(Vector2Int position, int floor = 0)
+        public DungeonCell(Vector2Int position)
         {
             GridPosition = position;
-            FloorLevel = floor;
             Type = CellType.Empty;
             IsOccupied = false;
             RoomID = -1;
@@ -49,7 +48,7 @@ namespace Didionysymus.DungeonGeneration.LSystem
         {
             return new Vector3(
                 GridPosition.x * cellSize, 
-                FloorLevel * floorHeight, 
+                floorHeight, 
                 GridPosition.y * cellSize
             );
         }
