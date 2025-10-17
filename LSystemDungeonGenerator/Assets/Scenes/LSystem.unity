@@ -119,98 +119,6 @@ NavMeshSettings:
     debug:
       m_Flags: 0
   m_NavMeshData: {fileID: 0}
---- !u!1 &1284462497
-GameObject:
-  m_ObjectHideFlags: 0
-  m_CorrespondingSourceObject: {fileID: 0}
-  m_PrefabInstance: {fileID: 0}
-  m_PrefabAsset: {fileID: 0}
-  serializedVersion: 6
-  m_Component:
-  - component: {fileID: 1284462500}
-  - component: {fileID: 1284462499}
-  - component: {fileID: 1284462498}
-  m_Layer: 0
-  m_Name: Main Camera
-  m_TagString: MainCamera
-  m_Icon: {fileID: 0}
-  m_NavMeshLayer: 0
-  m_StaticEditorFlags: 0
-  m_IsActive: 1
---- !u!81 &1284462498
-AudioListener:
-  m_ObjectHideFlags: 0
-  m_CorrespondingSourceObject: {fileID: 0}
-  m_PrefabInstance: {fileID: 0}
-  m_PrefabAsset: {fileID: 0}
-  m_GameObject: {fileID: 1284462497}
-  m_Enabled: 1
---- !u!20 &1284462499
-Camera:
-  m_ObjectHideFlags: 0
-  m_CorrespondingSourceObject: {fileID: 0}
-  m_PrefabInstance: {fileID: 0}
-  m_PrefabAsset: {fileID: 0}
-  m_GameObject: {fileID: 1284462497}
-  m_Enabled: 1
-  serializedVersion: 2
-  m_ClearFlags: 1
-  m_BackGroundColor: {r: 0.19215687, g: 0.3019608, b: 0.4745098, a: 0}
-  m_projectionMatrixMode: 1
-  m_GateFitMode: 2
-  m_FOVAxisMode: 0
-  m_Iso: 200
-  m_ShutterSpeed: 0.005
-  m_Aperture: 16
-  m_FocusDistance: 10
-  m_FocalLength: 50
-  m_BladeCount: 5
-  m_Curvature: {x: 2, y: 11}
-  m_BarrelClipping: 0.25
-  m_Anamorphism: 0
-  m_SensorSize: {x: 36, y: 24}
-  m_LensShift: {x: 0, y: 0}
-  m_NormalizedViewPortRect:
-    serializedVersion: 2
-    x: 0
-    y: 0
-    width: 1
-    height: 1
-  near clip plane: 0.3
-  far clip plane: 1000
-  field of view: 60
-  orthographic: 0
-  orthographic size: 5
-  m_Depth: -1
-  m_CullingMask:
-    serializedVersion: 2
-    m_Bits: 4294967295
-  m_RenderingPath: -1
-  m_TargetTexture: {fileID: 0}
-  m_TargetDisplay: 0
-  m_TargetEye: 3
-  m_HDR: 1
-  m_AllowMSAA: 1
-  m_AllowDynamicResolution: 0
-  m_ForceIntoRT: 0
-  m_OcclusionCulling: 1
-  m_StereoConvergence: 10
-  m_StereoSeparation: 0.022
---- !u!4 &1284462500
-Transform:
-  m_ObjectHideFlags: 0
-  m_CorrespondingSourceObject: {fileID: 0}
-  m_PrefabInstance: {fileID: 0}
-  m_PrefabAsset: {fileID: 0}
-  m_GameObject: {fileID: 1284462497}
-  serializedVersion: 2
-  m_LocalRotation: {x: 0, y: 0, z: 0, w: 1}
-  m_LocalPosition: {x: 0, y: 1, z: -10}
-  m_LocalScale: {x: 1, y: 1, z: 1}
-  m_ConstrainProportionsScale: 0
-  m_Children: []
-  m_Father: {fileID: 0}
-  m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
 --- !u!1 &1351406665
 GameObject:
   m_ObjectHideFlags: 0
@@ -223,6 +131,7 @@ GameObject:
   - component: {fileID: 1351406667}
   - component: {fileID: 1351406666}
   - component: {fileID: 1351406669}
+  - component: {fileID: 1351406670}
   m_Layer: 0
   m_Name: Generator
   m_TagString: Untagged
@@ -291,40 +200,91 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 866af7737edc4bc48bfb69084982f3a7, type: 3}
   m_Name: 
   m_EditorClassIdentifier: 
-  PropSets:
-  - Name: Safe Rooms
+  TorchConfig:
+    TorchPrefab: {fileID: 7723819420044493729, guid: 7b161c7322eb4434d9589c220a490f31, type: 3}
+    MinSpacing: 3
+    MaxSpacing: 5
+    WallOffset: 0.1
+    HeightOffset: 1.5
+    PlaceInRooms: 1
+    PlaceInCorridors: 1
+    CornerSkipChance: 0.5
+  GeneralProps:
+    Name: General
     PropPrefabs:
-    - {fileID: 3426929291102036688, guid: b378294b797d2bd499b6cf0efdf153ce, type: 3}
-    TargetRoomType: 4
-    PlacemenDensity: 0.4
-    PlaceOnWalls: 0
-    PlaceInCenter: 1
-  - Name: Standard Rooms
-    PropPrefabs:
+    - {fileID: 8880579018277960557, guid: 68d3a5da0abcdfa4a8fb745e61d7274f, type: 3}
     - {fileID: 6822806117096688099, guid: 3ba46a8002fc5dc46b421525a4dc7fc4, type: 3}
     - {fileID: 7938550141863839660, guid: 7be70ef42501d31468ab73362837c001, type: 3}
-    - {fileID: 8880579018277960557, guid: 68d3a5da0abcdfa4a8fb745e61d7274f, type: 3}
+    - {fileID: 3766412489454063930, guid: 601329237795c064da118da6167c8ad6, type: 3}
+    - {fileID: 6245899362784826809, guid: ef05fc0503f8c1947aba3d443455583d, type: 3}
+    - {fileID: 459062794264728121, guid: ba8952f3ba69ce14d809d77d0a7dc666, type: 3}
+    - {fileID: 6209117676255113821, guid: 860a00cd1d009394c8e02ae1e65fae16, type: 3}
+    - {fileID: 282346089379389361, guid: f9c6d7b65fda0e54b8c7d6a7e420d254, type: 3}
     TargetRoomType: 0
-    PlacemenDensity: 0.4
+    PlacementDensity: 0.2
     PlaceOnWalls: 0
     PlaceInCenter: 1
-  - Name: Treasure Rooms
+    PlaceInCorners: 0
+    MinSpacing: 2
+  StartRoomProps:
+    Name: Start
+    PropPrefabs:
+    - {fileID: 4864359542549474615, guid: 761fd051663fdc94aa3946178bc72b71, type: 3}
+    TargetRoomType: 1
+    PlacementDensity: 0.1
+    PlaceOnWalls: 0
+    PlaceInCenter: 1
+    PlaceInCorners: 0
+    MinSpacing: 1
+  BossRoomProps:
+    Name: Boss Room
+    PropPrefabs:
+    - {fileID: 4864359542549474615, guid: 761fd051663fdc94aa3946178bc72b71, type: 3}
+    TargetRoomType: 2
+    PlacementDensity: 0.4
+    PlaceOnWalls: 0
+    PlaceInCenter: 1
+    PlaceInCorners: 0
+    MinSpacing: 2
+  TreasureRoomProps:
+    Name: Treasure
     PropPrefabs:
     - {fileID: 1270200691094400241, guid: 1ef689caa0aa3884b87a288c34b1743f, type: 3}
     TargetRoomType: 3
-    PlacemenDensity: 0.4
+    PlacementDensity: 0.6
     PlaceOnWalls: 0
     PlaceInCenter: 1
-  - Name: All Walls
+    PlaceInCorners: 1
+    MinSpacing: 1
+  SafeRoomProps:
+    Name: Safe
     PropPrefabs:
-    - {fileID: 7723819420044493729, guid: 7b161c7322eb4434d9589c220a490f31, type: 3}
-    TargetRoomType: 0
-    PlacemenDensity: 0.4
-    PlaceOnWalls: 1
-    PlaceInCenter: 0
+    - {fileID: 3426929291102036688, guid: b378294b797d2bd499b6cf0efdf153ce, type: 3}
+    TargetRoomType: 4
+    PlacementDensity: 0.3
+    PlaceOnWalls: 0
+    PlaceInCenter: 1
+    PlaceInCorners: 0
+    MinSpacing: 2
   WallOffset: 0.4
-  CenterSpacing: 0.8
-  Parent: {fileID: 0}
+  MinDistanceFromDoors: 1.5
+  AvoidDoorways: 1
+--- !u!114 &1351406670
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 1351406665}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 20162c79b6f053245b5158a3d22eb341, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: 
+  Generator: {fileID: 1351406667}
+  FirstPersonPlayerPrefab: {fileID: 8509900947437159111, guid: 0a6c9b76c688fda41a496561abfdbc10, type: 3}
+  SpawnOnAwake: 1
+  AlignToRoomFacing: 1
 --- !u!1 &2124461909
 GameObject:
   m_ObjectHideFlags: 0
@@ -450,6 +410,5 @@ MonoBehaviour:
 SceneRoots:
   m_ObjectHideFlags: 0
   m_Roots:
-  - {fileID: 1284462500}
   - {fileID: 2124461911}
   - {fileID: 1351406668}

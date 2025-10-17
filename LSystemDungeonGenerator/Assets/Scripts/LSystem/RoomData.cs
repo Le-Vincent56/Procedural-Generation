@@ -73,7 +73,7 @@ namespace Didionysymus.DungeonGeneration.LSystem
             Vector2Int center = GetCenter();
             return new Vector3(
                 center.x * cellSize,
-                FloorLevel * floorHeight, 
+               floorHeight, 
                 center.y * cellSize
             );
         }

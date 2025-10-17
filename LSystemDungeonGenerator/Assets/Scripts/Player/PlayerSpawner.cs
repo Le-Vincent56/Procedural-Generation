@@ -54,7 +54,7 @@ namespace Didionysymus.DungeonGeneration.Player
             // Compute a good spawn height
             DungeonConfig config = Generator.Configuration;
             Vector3 world = start.GetWorldCenter(config.CellSize, config.FloorHeightUnits);
-
+            
             // Lift the spawn by half a meter to prevent clipping with the floor
             world.y += 0.5f;
             
