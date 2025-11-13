@@ -1,0 +1,29 @@
+%YAML 1.1
+%TAG !u! tag:unity3d.com,2011:
+--- !u!114 &11400000
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 0}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 786d6dba4c8f4f69b1de62b866b8c911, type: 3}
+  m_Name: MedievalTown_Phase1
+  m_EditorClassIdentifier: 
+  Tiles:
+  - {fileID: 11400000, guid: 72afe1a2e2072059685ca9bd7690f89f, type: 2}
+  - {fileID: 11400000, guid: d80dd5433925401ab9f96d080b1c0d2a, type: 2}
+  - {fileID: 11400000, guid: 86fea18a350eb9748ae19fedb7ca1058, type: 2}
+  - {fileID: 11400000, guid: 04156c1a04069a0a6bdfc4e1e909e304, type: 2}
+  - {fileID: 11400000, guid: db850a6052f904c54a0a4a29d82971e4, type: 2}
+  - {fileID: 11400000, guid: 94ce093e48914313baa0db4a86f92ac5, type: 2}
+  - {fileID: 11400000, guid: 32de70a6cf12be0c697fe42d77040acb, type: 2}
+  - {fileID: 11400000, guid: 350413664e8a5bac89711cafd92b5363, type: 2}
+  SetName: MedievalTown_Phase1_Roads
+  DefaultTileSize: 5
+  RoadWeightMultiplier: 2
+  BuildingWeightMultiplier: 1
+  EmptyWeightMultiplier: 1.5
+  WallWeightMultiplier: 1

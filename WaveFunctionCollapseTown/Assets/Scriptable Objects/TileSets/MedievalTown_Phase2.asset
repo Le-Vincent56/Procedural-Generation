@@ -1,0 +1,31 @@
+%YAML 1.1
+%TAG !u! tag:unity3d.com,2011:
+--- !u!114 &11400000
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 0}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 786d6dba4c8f4f69b1de62b866b8c911, type: 3}
+  m_Name: MedievalTown_Phase2
+  m_EditorClassIdentifier: 
+  Tiles:
+  - {fileID: 11400000, guid: d80dd5433925401ab9f96d080b1c0d2a, type: 2}
+  - {fileID: 11400000, guid: 04156c1a04069a0a6bdfc4e1e909e304, type: 2}
+  - {fileID: 11400000, guid: db850a6052f904c54a0a4a29d82971e4, type: 2}
+  - {fileID: 11400000, guid: 94ce093e48914313baa0db4a86f92ac5, type: 2}
+  - {fileID: 11400000, guid: 32de70a6cf12be0c697fe42d77040acb, type: 2}
+  - {fileID: 11400000, guid: 350413664e8a5bac89711cafd92b5363, type: 2}
+  - {fileID: 11400000, guid: d8d591441eecc8d4caf7037915535e49, type: 2}
+  - {fileID: 11400000, guid: df74fd26ae71afde5a586240a6650a76, type: 2}
+  - {fileID: 11400000, guid: 5c9e6b8b7a9bfcb87af7904f7ee333a1, type: 2}
+  - {fileID: 11400000, guid: c33554915e27528f3956349c57f0d130, type: 2}
+  SetName: MedievalTown_Phase2_Buildings
+  DefaultTileSize: 5
+  RoadWeightMultiplier: 1.8
+  BuildingWeightMultiplier: 1
+  EmptyWeightMultiplier: 1.3
+  WallWeightMultiplier: 1
